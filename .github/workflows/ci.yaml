@@ -25,6 +25,7 @@ jobs:
           java-version: '21'
     
       - name: Clean and verify
+        working-directory: ./backend
         run: |
           chmod +x mvnw
           ./mvnw clean verify

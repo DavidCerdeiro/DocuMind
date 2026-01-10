@@ -1,0 +1,41 @@
+dotenv:
+  directory: ../
+
+  
+spring:
+  application:
+    name: documind
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/documind
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: phi3
+      embedding:
+        options:
+          model: nomic-embed-text
+    
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 768 
+
+server:
+  port: 8080

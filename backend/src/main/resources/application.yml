@@ -36,9 +36,11 @@ spring:
         index-type: HNSW
         distance-type: COSINE_DISTANCE
         dimensions: 768 
-  app:
+
+app:
     document:
       chunk-size: 500
       chunk-overlap: 40
+      
 server:
   port: 8080

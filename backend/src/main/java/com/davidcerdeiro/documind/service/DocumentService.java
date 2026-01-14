@@ -19,7 +19,7 @@ public class DocumentService {
     public int chunkOverlap;
 
     // Method to chunk PDF document
-    List<Document> chunkingDocument(Resource document) {
+    public List<Document> chunkingDocument(Resource document) {
         // First, read the PDF document
         PagePdfDocumentReader pdfDocumentReader = new PagePdfDocumentReader(document);
         List<Document> documents = pdfDocumentReader.read();

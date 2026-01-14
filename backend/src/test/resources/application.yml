@@ -13,7 +13,12 @@ spring:
     show-sql: true 
   docker:
     compose:
-      enabled: false 
+      enabled: false
   sql:
     init:
       mode: always
+
+app:
+    document:
+      chunk-size: 500
+      chunk-overlap: 40

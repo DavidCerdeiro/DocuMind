@@ -80,6 +80,8 @@ uploads/
 # But keep this example file
 !backend/src/main/resources/sample-contract.pdf
 
+!**/src/test/resources/**/*.pdf
+
 # If you download Ollama models locally in the project folder
 ollama_models/
 models/

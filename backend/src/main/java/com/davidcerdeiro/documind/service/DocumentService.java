@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,12 @@ public class DocumentService {
 
     @Value("${app.document.chunk-overlap}")
     public int chunkOverlap;
+
+    private final VectorStore vectorStore;
+
+    public DocumentService(VectorStore vectorStore) {
+        this.vectorStore = vectorStore;
+    }
 
     // Method to chunk PDF document
     public List<Document> chunkingDocument(Resource document) {
@@ -33,5 +40,10 @@ public class DocumentService {
         TokenTextSplitter textSplitter = new TokenTextSplitter(chunkSize, chunkOverlap, 5, 10000, true);
         
         return textSplitter.apply(cleanedDocuments);
+    }
+
+    // Method to save documents to vector store
+    public void saveDocument(List<Document> document) {
+        vectorStore.add(document);
     }
 }

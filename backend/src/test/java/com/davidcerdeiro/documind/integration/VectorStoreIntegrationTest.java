@@ -6,49 +6,15 @@ import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
-import org.springframework.ai.transformers.TransformersEmbeddingModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @SpringBootTest
 @Testcontainers
-public class VectorStoreIntegrationTest {
-    
-    // Define a PostgreSQL container with pgvector extension
-    @Container
-    static PostgreSQLContainer<?> pgvector = new PostgreSQLContainer<>(
-            DockerImageName.parse("pgvector/pgvector:pg16")
-                    .asCompatibleSubstituteFor("postgres")
-    );
-
-    // Register dynamic properties for Spring Boot to connect to the PostgreSQL container
-    @DynamicPropertySource
-    static void registerPgProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", pgvector::getJdbcUrl);
-        registry.add("spring.datasource.username", pgvector::getUsername);
-        registry.add("spring.datasource.password", pgvector::getPassword);
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-    }
-
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        public EmbeddingModel embeddingModel() {
-            return new TransformersEmbeddingModel();
-        }
-    }
-
+public class VectorStoreIntegrationTest extends BaseIntegrationTest {
     @Autowired
     VectorStore vectorStore;
 

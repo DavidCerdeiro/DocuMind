@@ -1,10 +1,9 @@
 package com.davidcerdeiro.documind;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import com.davidcerdeiro.documind.integration.BaseIntegrationTest;
 
-@SpringBootTest
-class DocumindApplicationTests {
+class DocumindApplicationTests extends BaseIntegrationTest{
 
 	@Test
 	void contextLoads() {

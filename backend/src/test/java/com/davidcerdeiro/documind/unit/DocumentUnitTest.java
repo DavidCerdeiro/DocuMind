@@ -3,25 +3,38 @@ package com.davidcerdeiro.documind.unit;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.davidcerdeiro.documind.service.DocumentService;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 public class DocumentUnitTest {
-    @Autowired
+    @InjectMocks
     private DocumentService documentService;
 
-    @Value("classpath:pdfs/sample-test.pdf") 
-    private Resource testPdfResource;
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(documentService, "chunkSize", 500); 
+        ReflectionTestUtils.setField(documentService, "chunkOverlap", 40); 
+    }
 
     @Test
     void testChunkingDocument() {
+        Resource testPdfResource = new ClassPathResource("pdfs/sample-test.pdf");
+
+        if (!testPdfResource.exists()) {
+             throw new RuntimeException("sample-test.pdf not found in classpath under pdfs/ directory.");
+        }
+
         var chunks = documentService.chunkingDocument(testPdfResource);
+
         // Basic assertion to ensure chunks were created
         assert(chunks.size() > 0);
         // Verify that no chunk starts or ends with spaces and none are blank

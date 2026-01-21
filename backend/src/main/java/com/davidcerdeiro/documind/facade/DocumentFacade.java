@@ -38,14 +38,14 @@ public class DocumentFacade {
         }
     }
 
-    public String promptModel(String question){
+    public String promptModel(String question, String languageCode) {
         List<Document> similarDocuments = documentService.similaritySearch(question);
 
         if (similarDocuments.isEmpty()) {
             throw new NoDocumentsException("The question "+ question + " doesn't have related info in the document");
         }
 
-        String response = documentService.promptModel(similarDocuments, question);
+        String response = documentService.promptModel(similarDocuments, question, languageCode);
 
         return response;
     }

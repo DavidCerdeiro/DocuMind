@@ -1,11 +1,13 @@
 package com.davidcerdeiro.documind.facade;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.ai.document.Document;
 import com.davidcerdeiro.documind.exception.InvalidFileTypeException;
+import com.davidcerdeiro.documind.exception.NoDocumentsException;
 import com.davidcerdeiro.documind.service.DocumentService;
 
 @Component
@@ -34,5 +36,17 @@ public class DocumentFacade {
             // Catch any exception and rethrow as a runtime exception
             throw new RuntimeException("Error processing and saving the document", e);
         }
+    }
+
+    public String promptModel(String question){
+        List<Document> similarDocuments = documentService.similaritySearch(question);
+
+        if (similarDocuments.isEmpty()) {
+            throw new NoDocumentsException("The question "+ question + " doesn't have related info in the document");
+        }
+
+        String response = documentService.promptModel(similarDocuments, question);
+
+        return response;
     }
 }

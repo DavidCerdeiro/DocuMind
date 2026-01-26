@@ -1,0 +1,14 @@
+{
+    "welcome":{
+        "title": "Welcome to DocuMind 🧠!",
+        "description": "Start by uploading your document and I'll take care of answering all your questions about its content.",
+        "uploadLabel": "Upload Document",
+        "confirmationButton": "Got it, Let's Start!",
+        "file":{
+            "name": "File: {{fileName}}",
+            "dropPrompt": "Drop the PDF here!",
+            "clickPrompt": "Click or drag your PDF here",
+            "onlyPdfAlert": "Please upload only PDF files."
+        }
+    }
+}

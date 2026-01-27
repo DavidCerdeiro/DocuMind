@@ -9,7 +9,9 @@
             "dropPrompt": "¡Suelta el PDF aquí!",
             "clickPrompt": "Haz clic o arrastra tu PDF aquí",
             "onlyPdfAlert": "Por favor, sube solo archivos PDF.",
-            "onlyPdfDescription": "Actualmente solo se permiten archivos en formato PDF para su procesamiento."
+            "onlyPdfDescription": "Actualmente solo se permiten archivos en formato PDF para su procesamiento.",
+            "uploadError": "Error en la subida",
+            "uploadErrorDescription": "No se pudo conectar con el servidor. Por favor, revise su conexión e intente nuevamente."
         }
     }
 }

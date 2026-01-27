@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { FileUploader } from "../components/FileUploader";
 import { DocuMindService } from "../service/DocuMindService"; 
+import { toast } from "sonner";
 
 export function WelcomePage() {
   const { t } = useTranslation();
@@ -24,9 +25,15 @@ export function WelcomePage() {
       console.log("Archivo subido con éxito, redirigiendo...");
       navigate("/chat");
       
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert(t("welcome.file.uploadError"));
+
+      let errorMessage = t("welcome.file.uploadErrorDescription");
+
+      toast.error(t("welcome.file.uploadError"), {
+        description: errorMessage,
+        duration: 5000, 
+      });
     } finally {
       setIsLoading(false);
     }

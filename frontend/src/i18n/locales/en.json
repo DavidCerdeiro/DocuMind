@@ -9,7 +9,9 @@
             "dropPrompt": "Drop the PDF here!",
             "clickPrompt": "Click or drag your PDF here",
             "onlyPdfAlert": "Please upload only PDF files.",
-            "onlyPdfDescription": "Currently, only files in PDF format are allowed for processing."
+            "onlyPdfDescription": "Currently, only files in PDF format are allowed for processing.",
+            "uploadError": "Upload Error",
+            "uploadErrorDescription": "Could not connect to the server. Please check your connection and try again."
         }
     }
 }

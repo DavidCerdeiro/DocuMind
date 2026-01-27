@@ -8,7 +8,8 @@
             "name": "Archivo: {{fileName}}",
             "dropPrompt": "¡Suelta el PDF aquí!",
             "clickPrompt": "Haz clic o arrastra tu PDF aquí",
-            "onlyPdfAlert": "Por favor, sube solo archivos PDF."
+            "onlyPdfAlert": "Por favor, sube solo archivos PDF.",
+            "onlyPdfDescription": "Actualmente solo se permiten archivos en formato PDF para su procesamiento."
         }
     }
 }

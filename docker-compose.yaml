@@ -1,4 +1,5 @@
 services:
+  # --- BD/IA ---
   db:
     image: pgvector/pgvector:pg17
     container_name: my_postgres
@@ -20,7 +21,37 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     entrypoint: /bin/sh
-    command: -c "/bin/ollama serve & sleep 5 && ollama pull phi3 && ollama pull nomic-embed-text && wait"    
+    command: -c "/bin/ollama serve & sleep 5 && ollama pull phi3 && ollama pull nomic-embed-text && wait"
+
+  # --- BACKEND ---
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    image: documind-backend:latest
+    container_name: documind_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/documind
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_AI_OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - db
+      - ollama
+
+  # --- FRONTEND ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: documind-frontend:latest
+    container_name: documind_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
 
 volumes:
   db_data:

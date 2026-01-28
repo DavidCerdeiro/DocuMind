@@ -12,61 +12,52 @@ export function WelcomePage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Estado opcional para mostrar mensajes de progreso al usuario
-  const [loadingMessage, setLoadingMessage] = useState("Procesando...");
+  const [loadingMessage, setLoadingMessage] = useState(t("welcome.file.initialStatus"));
 
   const handleUpload = async () => {
     if (!selectedFile) return;
 
     setIsLoading(true);
-    setLoadingMessage("Iniciando carga..."); // Feedback inicial
+    setLoadingMessage(t("welcome.file.initialStatus")); 
 
     try {
-      // PASO 1: Subir archivo y obtener ID del trabajo
+      // 1. Upload file and get Job ID
       const { jobId } = await DocuMindService.uploadDocument(selectedFile);
       
-      setLoadingMessage("Analizando documento..."); // Cambiamos mensaje
+      setLoadingMessage(t("welcome.file.processing"));
 
-      // PASO 2: Iniciar Polling (Preguntar cada 2 segundos)
+      // 2. Start Polling (Check every 2 seconds)
       const pollInterval = setInterval(async () => {
         try {
           const status = await DocuMindService.getJobStatus(jobId);
-          console.log(`Estado del trabajo ${jobId}: ${status}`);
+          console.log(`Job status ${jobId}: ${status}`);
 
           if (status === "COMPLETED") {
-            // ¡Éxito!
             clearInterval(pollInterval);
-            toast.success(t("welcome.file.success") || "¡Documento listo!");
+            toast.success(t("welcome.file.success"));
             navigate("/chat");
             
           } else if (status.startsWith("ERROR") || status === "NOT_FOUND") {
-            // Error en el backend durante el proceso
+            // Error in backend during processing
             clearInterval(pollInterval);
-            toast.error("Error en el procesamiento", { 
+            toast.error(t("welcome.file.uploadError"), { 
               description: status 
             });
             setIsLoading(false);
           } 
-          // Si sigue en PROCESSING, el intervalo continúa...
 
         } catch (pollError) {
-          // Error de red al consultar el estado
+          // Error during polling
           clearInterval(pollInterval);
           console.error(pollError);
-          toast.error("Error de conexión verificando estado");
+          toast.error(t("welcome.file.uploadErrorDescription"));
           setIsLoading(false);
         }
-      }, 2000); // 2000ms = 2 segundos
-
+      }, 2000);
     } catch (error: any) {
-      // Error inicial al subir el archivo (antes del polling)
       console.error(error);
       let errorMessage = t("welcome.file.uploadErrorDescription");
       
-      if (error.message && error.message.includes("Backend Unreachable")) {
-          errorMessage = "El servidor parece estar apagado 🔌.";
-      }
-
       toast.error(t("welcome.file.uploadError"), {
         description: errorMessage,
         duration: 5000, 
@@ -99,7 +90,6 @@ export function WelcomePage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {/* Mostramos el mensaje dinámico (Iniciando -> Analizando...) */}
             <span>{loadingMessage}</span>
           </>
         ) : (

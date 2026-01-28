@@ -12,7 +12,9 @@
             "onlyPdfDescription": "Currently, only files in PDF format are allowed for processing.",
             "uploadError": "Upload Error",
             "uploadErrorDescription": "Could not connect to the server. Please check your connection and try again.",
-            "success": "File processed successfully!"
+            "success": "File processed successfully!",
+            "initialStatus": "Processing...",
+            "processing": "Your document is being processed. This may take a few minutes. Please wait..."
         }
     },
     "chat":{

@@ -38,31 +38,28 @@ public class DocumentService {
 
     // Method to chunk PDF document
     public List<Document> chunkingDocument(Resource document) {
-        // 1. Log de inicio
-        System.out.println("Iniciando lectura del PDF...");
+        // 1. Initial logging
+        System.out.println("Starting PDF reading...");
         PagePdfDocumentReader pdfDocumentReader = new PagePdfDocumentReader(document);
         List<Document> documents = pdfDocumentReader.read();
-        System.out.println("PDF leído. Páginas encontradas: " + documents.size());
+        System.out.println("PDF read. Pages found: " + documents.size());
 
-        // 2. Limpieza (Corregida para Español y Chunking)
+        // 2. Cleaning (Corrected for Spanish and Chunking)
         List<Document> cleanDocuments = documents.stream().map(doc -> {
             String cleanText = doc.getText()
-                // Elimina caracteres de control raros (pero respeta tildes y ñ)
                 .replaceAll("[\\p{Cntrl}&&[^\\r\\n\\t]]", "") 
-                // Normaliza espacios dobles a uno, pero deja los saltos de línea (\n)
                 .replaceAll("[ \\t]+", " ")
                 .trim();
             return new Document(cleanText, doc.getMetadata());
         }).toList();
 
-        System.out.println("Limpieza completada. Iniciando división (Chunking)...");
+        System.out.println("Cleaning completed. Starting chunking...");
 
         // 3. Chunking
-        // Mantenemos tu config, es buena.
         TokenTextSplitter textSplitter = new TokenTextSplitter(chunkSize, chunkOverlap, 5, 10000, true);
         List<Document> chunks = textSplitter.apply(cleanDocuments);
         
-        System.out.println("Chunking finalizado. Total de fragmentos generados: " + chunks.size());
+        System.out.println("Chunking completed. Total chunks generated: " + chunks.size());
         
         return chunks;
     }
@@ -72,12 +69,11 @@ public class DocumentService {
         try {
             processStatus.put(fileId, "PROCESSING");
             
-            // Llamamos a tu lógica lenta existente
             List<Document> chunks = this.chunkingDocument(file);
             this.saveDocument(chunks);
             
             processStatus.put(fileId, "COMPLETED");
-            System.out.println("Proceso " + fileId + " terminado.");
+            System.out.println("Process " + fileId + " completed.");
             
         } catch (Exception e) {
             processStatus.put(fileId, "ERROR: " + e.getMessage());
@@ -91,23 +87,21 @@ public class DocumentService {
 
     // Method to save documents to vector store
     public void saveDocument(List<Document> documents) {
-        // Lote pequeño para no saturar Ollama corriendo en CPU
         int batchSize = 50; 
         int total = documents.size();
 
-        System.out.println("Iniciando generación de embeddings para " + total + " fragmentos...");
+        System.out.println("Starting embedding generation for " + total + " chunks...");
 
         for (int i = 0; i < total; i += batchSize) {
             int end = Math.min(i + batchSize, total);
             List<Document> batch = documents.subList(i, end);
             
-            System.out.println("Procesando lote " + ((i / batchSize) + 1) + " (" + (i + 1) + " al " + end + " de " + total + ")...");
+            System.out.println("Processing batch " + ((i / batchSize) + 1) + " (" + (i + 1) + " to " + end + " of " + total + ")...");
             
-            // Guardamos solo este trozo
             vectorStore.add(batch);
         }
         
-        System.out.println("¡Todos los embeddings guardados correctamente!");
+        System.out.println("All embeddings saved successfully!");
     }
 
     public List<Document> similaritySearch(String question){
@@ -125,7 +119,6 @@ public class DocumentService {
                 .map(Document::getText)
                 .collect(Collectors.joining(System.lineSeparator()));
 
-        // 1. CAMBIO DE PROMPT: Instrucciones al final y más agresivas
         String systemText = """
             [CONTEXTO]
             {context_str}
@@ -145,15 +138,12 @@ public class DocumentService {
                 .call()
                 .content();
 
-        // --- CAPA DE SEGURIDAD (Post-Procesamiento) ---
 
-        // 2. Limpieza básica
         if (response == null || response.isBlank()) {
-            return null; // Esto lanzará el 404 en el controller
+            return null;
         }
 
-        // 3. Detección de fallos del modelo (Inglés o alucinaciones de rechazo)
-        // Phi-3 a veces dice "I cannot answer", "Sorry", "I don't have info"
+        // 3. Fail-safe checks
         String normalizedResponse = response.toLowerCase();
         
         boolean isRefusal = response.contains("[[NO_INFO_FOUND]]") || 
@@ -163,7 +153,7 @@ public class DocumentService {
                             normalizedResponse.contains("provided documents do not");
 
         if (isRefusal) {
-            return null; // Forzamos el 404 para que el Frontend muestre el mensaje traducido
+            return null;
         }
 
         return response;

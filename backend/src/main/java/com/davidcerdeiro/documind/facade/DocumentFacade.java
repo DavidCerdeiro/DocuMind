@@ -22,27 +22,26 @@ public class DocumentFacade {
 
 
     public String processAndSaveDocumentAsync(MultipartFile file) {
-        // 1. Validación rápida (Síncrona)
+        // 1. Validate file type
         if (!Objects.equals(file.getContentType(), "application/pdf")) {
             throw new InvalidFileTypeException("The file must be a PDF. Received: " + file.getContentType());
         }
 
-        // 2. Generar ID único para este proceso
+        // 2. Generate unique ID for this process
         String jobId = UUID.randomUUID().toString();
 
-        // 3. Lanzar el proceso en segundo plano (Fuego y olvido)
+        // 3. Launch the process in the background
         try {
-            // Pasamos el recurso del archivo. Spring maneja el recurso en memoria temporalmente.
             documentService.processFileAsync(jobId, file.getResource());
         } catch (Exception e) {
             throw new RuntimeException("Error initiating document processing", e);
         }
 
-        // 4. Retornar el ID inmediatamente para que el usuario no espere
+        // 4. Return the ID immediately so the user doesn't have to wait
         return jobId;
     }
     
-    // Método para consultar el estado
+    // MMethod to check the status
     public String getProcessingStatus(String jobId) {
         return documentService.getStatus(jobId);
     }

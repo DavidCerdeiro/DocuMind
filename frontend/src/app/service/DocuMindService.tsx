@@ -3,8 +3,10 @@ const CHAT_API_URL = "/api/chat";
 
 export const DocuMindService = {
   /**
-   * Inicia la subida asíncrona del documento.
-   * Retorna el ID del trabajo (Job ID) para hacer seguimiento.
+   * Asynchronous upload of a document (PDF).
+   * @param file The PDF file to upload.
+   * @returns An object containing the jobId for tracking processing status.
+   * @throws Error with specific messages for different failure cases.
    */
   uploadDocument: async (file: File): Promise<{ jobId: string }> => {
     const formData = new FormData();
@@ -22,7 +24,6 @@ export const DocuMindService = {
         throw new Error(`Upload error: ${response.status} ${response.statusText}`);
       }
 
-      // Ahora esperamos recibir: { "jobId": "...", "status": "PROCESSING" }
       return await response.json();
     } catch (error) {
       console.error("Error in uploadDocument:", error);
@@ -31,8 +32,9 @@ export const DocuMindService = {
   },
 
   /**
-   * Consulta el estado de un trabajo de procesamiento.
-   * Retorna el estado actual (PROCESSING, COMPLETED, ERROR...).
+   * Gets the processing status of the uploaded document.
+   * @param jobId The job ID returned from uploadDocument.
+   * @returns A promise that resolves to the job status string.
    */
   getJobStatus: async (jobId: string): Promise<string> => {
     try {
@@ -43,7 +45,7 @@ export const DocuMindService = {
       }
 
       const data = await response.json();
-      return data.status; // "PROCESSING", "COMPLETED" o "ERROR..."
+      return data.status; // "PROCESSING", "COMPLETED" or "ERROR..."
     } catch (error) {
       console.error("Error checking status:", error);
       throw error;
@@ -51,10 +53,10 @@ export const DocuMindService = {
   },
 
   /**
-   * Envía una pregunta al modelo de IA sobre el documento cargado.
-   * @param question El texto de la pregunta.
-   * @returns La respuesta de la IA como string.
-   * @throws Error "INFO_NOT_FOUND" si la IA no tiene la respuesta en el doc.
+   * Sends a question to the AI model about the uploaded document.
+   * @param question The text of the question.
+   * @returns The AI's response as a string.
+   * @throws Error "INFO_NOT_FOUND" if the AI does not have the answer in the document.
    */
   sendQuestion: async (question: string): Promise<string> => {
     try {
@@ -82,6 +84,31 @@ export const DocuMindService = {
 
     } catch (error) {
       console.error("Error in sendQuestion:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Resets the current session by clearing the vector store.
+   * @returns A promise that resolves when the reset is complete.
+   * @throws Error with specific messages for different failure cases.
+   */
+  resetSession: async (): Promise<void> => {
+    try {
+      const response = await fetch(`${DOCS_API_URL}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        if (response.status === 504 || response.status === 502) {
+            throw new Error("Backend Unreachable");
+        }
+        throw new Error(`Reset error: ${response.status}`);
+      }
+      
+      // If successful (204), no need to return anything
+    } catch (error) {
+      console.error("Error in resetSession:", error);
       throw error;
     }
   }

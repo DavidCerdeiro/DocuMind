@@ -15,7 +15,13 @@
             "success": "¡Archivo procesado con éxito!",
             "initialStatus": "Procesando...",
             "processing": "Tu documento se está procesando. Esto puede tardar unos minutos. Por favor, espera..."
-        }       
+        },
+        "modal":{
+            "title": "¿Deseas cerrar la sesión?",
+            "description": "Al cerrar sesión, se eliminará el documento cargado y el historial de chat actual. ¿Quieres continuar?",
+            "confirmButton": "Sí, cerrar sesión",
+            "cancelButton": "No, mantener sesión actual"
+        } 
     },
     "chat":{
             "title": "DocuMind 🧠",
@@ -28,6 +34,12 @@
             "answerNotFound": "Lo siento, no pude encontrar información relacionada en el documento para responder a tu pregunta.",
             "errorGeneric": "Lo siento, ocurrió un error al procesar tu solicitud. Por favor, intentelo de nuevo.",
             "footerAdvice": "DocuMind puede cometer errores. Verifica la información importante.",
-            "thinking": "Estoy pensando..."
+            "thinking": "Estoy pensando...",
+            "closingSession": "Cerrando sesión...",
+            "sessionClosed": "Sesión cerrada correctamente.",
+            "error":{
+                "backendUnreachableTitle": "Error de comunicación",
+                "backendUnreachableDescription": "No puedo conectar con el cerebro de DocuMind (Backend apagado)."
+            }
         }
 }

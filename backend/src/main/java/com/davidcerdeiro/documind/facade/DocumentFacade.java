@@ -57,4 +57,8 @@ public class DocumentFacade {
 
         return response;
     }
+
+    public void clearVectorStore() {
+        documentService.clearVectorStore();
+    }
 }

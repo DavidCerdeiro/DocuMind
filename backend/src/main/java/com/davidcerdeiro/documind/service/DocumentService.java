@@ -13,8 +13,10 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DocumentService {
@@ -31,9 +33,12 @@ public class DocumentService {
 
     private final Map<String, String> processStatus = new ConcurrentHashMap<>();
 
-    public DocumentService(VectorStore vectorStore, ChatClient chatClient) {
+    private final JdbcTemplate jdbcTemplate;
+
+    public DocumentService(VectorStore vectorStore, ChatClient chatClient, JdbcTemplate jdbcTemplate) {
         this.vectorStore = vectorStore;
         this.chatClient = chatClient;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     // Method to chunk PDF document
@@ -104,14 +109,28 @@ public class DocumentService {
         System.out.println("All embeddings saved successfully!");
     }
 
-    public List<Document> similaritySearch(String question){
+    public List<Document> similaritySearch(String question) {
+        System.out.println("Buscando similitudes para: " + question);
+        
         SearchRequest searchRequest = SearchRequest.builder()
             .query(question)
-            .topK(3) 
-            .similarityThreshold(0.6)
+            .topK(6) 
+            .similarityThreshold(0.4)
             .build();
+
+        List<Document> docs = vectorStore.similaritySearch(searchRequest);
         
-        return vectorStore.similaritySearch(searchRequest);
+        // DEBUG: Ver qué demonios está encontrando
+        System.out.println("--- CHUNKS ENCONTRADOS (" + docs.size() + ") ---");
+        docs.forEach(d -> {
+            System.out.println("Score: " + d.getMetadata().get("distance")); // O score según impl
+            // Imprimimos solo los primeros 100 caracteres para no ensuciar
+            String preview = d.getText().length() > 100 ? d.getText().substring(0, 100) : d.getText();
+            System.out.println("Contenido: " + preview.replace("\n", " ") + "...");
+        });
+        System.out.println("----------------------------------------------");
+
+        return docs;
     }
 
     public String promptModel(List<Document> similarDocuments, String question) {
@@ -119,17 +138,23 @@ public class DocumentService {
                 .map(Document::getText)
                 .collect(Collectors.joining(System.lineSeparator()));
 
+        // OPTIMIZACIÓN DEL PROMPT:
+        // 1. Reglas PRIMERO (evita fuga al final).
+        // 2. Inglés técnico para mejor obediencia del modelo (Phi-3).
+        // 3. Instrucción explícita de idioma de salida dinámico.
         String systemText = """
-            [CONTEXTO]
+            You are a precise and helpful assistant.
+            
+            RULES:
+            1. LANGUAGE: Detect the language of the user's question and answer EXCLUSIVELY in that language.
+            2. CONCISENESS: Limit your answer to maximum 80 words (approx. 3 sentences). Be direct.
+            3. SOURCE: Use ONLY the provided context below. Do not use outside knowledge.
+            4. MISSING INFO: If the answer is not in the context, return exactly: [[NO_INFO_FOUND]]
+            
+            CONTEXT:
+            ---------------------
             {context_str}
-            
-            [INSTRUCCIONES]
-            Eres una IA estricta. Tu trabajo es responder a la pregunta del usuario basándote SOLAMENTE en el [CONTEXTO] de arriba.
-            
-            REGLAS DE ORO:
-            1. Si la respuesta NO está explícitamente en el texto, DEBES responder únicamente con: [[NO_INFO_FOUND]]
-            2. NO inventes nada.
-            3. SE CONCISO: Responde en menos de 50 palabras si es posible. Ve al grano.
+            ---------------------
             """;
 
         String response = chatClient.prompt()
@@ -138,24 +163,31 @@ public class DocumentService {
                 .call()
                 .content();
 
-
         if (response == null || response.isBlank()) {
             return null;
         }
 
-        // 3. Fail-safe checks
         String normalizedResponse = response.toLowerCase();
-        
+
         boolean isRefusal = response.contains("[[NO_INFO_FOUND]]") || 
                             normalizedResponse.contains("sorry, i couldn't") ||
                             normalizedResponse.contains("i cannot answer") ||
-                            normalizedResponse.contains("does not contain information") ||
-                            normalizedResponse.contains("provided documents do not");
+                            normalizedResponse.contains("does not contain information");
 
         if (isRefusal) {
             return null;
         }
 
         return response;
+    }
+
+    @Transactional 
+    public void clearVectorStore() {
+        jdbcTemplate.execute("TRUNCATE TABLE vector_store");
+            
+        // Clear the in-memory status map
+        processStatus.clear();
+            
+        System.out.println(">>> SUCCESS: Vector database truncated.");
     }
 }

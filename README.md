@@ -1,13 +1,13 @@
 # 🧠 DocuMind | Enterprise RAG System
 
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)
 ![Spring AI](https://img.shields.io/badge/Spring_AI-0.8-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-> **"Chat with your documents"**. DocuMind is a robust REST API and Interface that leverages **Generative AI** to analyze PDF documents and answer questions based on their content, ensuring zero hallucinations by strictly adhering to the provided context.
+> **"Chat with your documents"**. DocuMind is a robust REST API and Interface that leverages **Generative AI** to analyze PDF documents and answer questions based on their content, ensuring zero hallucinations by strictly adhering to the provided context. Unlike basic RAG demos, DocuMind implements an **Asynchronous Architecture** to handle large files (e.g., +200-page manuals) without blocking the user interface, ensuring a robust backend performance.
 
 ---
 
@@ -18,11 +18,15 @@ DocuMind is a Full-Stack application designed to demonstrate the implementation 
 Unlike simple wrappers around ChatGPT, this project implements a full ETL pipeline for document processing, utilizing vector databases for semantic search and local LLMs for privacy-first inference.
 
 ### Key Features
-* **📄 Smart Ingestion:** Upload PDF contracts or manuals. The system splits, cleans, and vectorizes the text automatically.
-* **🔍 Semantic Search:** Uses `pgvector` to find relevant information based on meaning, not just keywords.
-* **🤖 Local Intelligence:** Integrated with **Ollama** (Llama3/Mistral) to run the AI locally with zero cloud costs.
-* **🛡️ Facade Pattern:** Implements a clean architecture separating the Business Logic from the AI complexity.
-* **☁️ Cloud Native:** Fully containerized with Docker & Kubernetes manifests ready for deployment.
+* **⚡ Async "Fire-and-Forget" Ingestion:** Uploads are handled asynchronously. The server accepts the file immediately (`202 Accepted`) and processes chunking and embedding in the background, preventing browser timeouts on large files.
+* **📊 Real-Time Status Polling:** The frontend implements smart polling to track the document processing progress (0% to 100%) in real-time with visual feedback.
+* **🧠 Local Intelligence (No Cloud Costs):** Powered by **Phi-3 (3.8B)** and **Nomic Embed Text**, running locally via Ollama.
+* **🎯 Precision Tuned:**
+    * **Context Window:** Optimized `300-token` chunks to reduce noise.
+    * **Retrieval:** `Top-K: 6` retrieval to capture dispersed information (e.g., financial tables) without sacrificing speed.
+    * **Determinism:** `Temperature: 0.1` for strictly factual answers.
+* **🛡️ Hallucination Safety Net:** A robust prompting strategy that forces the model to reply `[[NO_INFO_FOUND]]` if the answer isn't in the text, preventing misleading information.
+* **🌍 Multi-Language Support:** Automatically detects the user's question language (English/Spanish) and responds in the same language, regardless of the document's original language.
 
 ---
 
@@ -30,13 +34,13 @@ Unlike simple wrappers around ChatGPT, this project implements a full ETL pipeli
 
 ### Backend Core
 * **Language:** Java 21 (LTS) - Leveraging Virtual Threads for high concurrency.
-* **Framework:** Spring Boot 3.4.
+* **Framework:** Spring Boot 3.5.
 * **AI Integration:** Spring AI.
 * **Design Patterns:** MVC (Model-View-Controller) + **Facade Pattern**.
 
 ### Data & Infrastructure
 * **Vector DB:** PostgreSQL with `pgvector` extension.
-* **LLM Engine:** Ollama (Local) or OpenAI/Groq (Cloud fallback).
+* **LLM Engine:** Ollama (Local), phi3 model.
 * **DevOps:** Docker Compose & Kubernetes (Minikube compatible).
 
 ### Frontend
@@ -51,30 +55,31 @@ The application follows a strict separation of concerns using the **Facade Patte
 
 ```mermaid
 graph TD
-    User[👤 User] -->|1. Upload PDF / Ask Question| UI[⚛️ React Frontend]
-    UI -->|2. REST API Request| Controller[Spring Boot Controller]
-    Controller -->|3. Delegate| Facade[🏗️ DocuMind Facade Service]
+    User["👤 User"] -->|"1. Upload PDF"| UI["⚛️ React Frontend"]
+    UI -->|"2. POST /api/docs/upload"| Controller
+    Controller -->|"3. Return JobID (202 Accepted)"| UI
     
-    subgraph "Application Core"
-        Facade -->|4. Parse & Chunk| PDFReader[PDF Reader]
-        Facade -->|5. Embed & Store| VectorDB[(🐘 PostgreSQL + pgvector)]
-        Facade -->|6. Retrieve Context| VectorDB
-        Facade -->|7. Generate Answer| ChatClient[🤖 Spring AI Chat Client]
+    subgraph "Async Background Process"
+        Controller -.->|"4. Trigger Async Job"| Service
+        Service -->|"5. Clean & Chunk (300 tokens)"| PDFReader
+        Service -->|"6. Batch Embedding (50/batch)"| VectorDB[("🐘 PostgreSQL / pgvector")]
+        Service -- "Update Status" --> StatusMap["📍 Status Tracker"]
     end
     
-    ChatClient <-->|8. Inference| Ollama[🦙 Ollama / LLM]
+    subgraph "Status Check"
+        UI -->|"7. GET /status/{jobId}"| Controller
+        Controller -->|"8. Return Status"| UI
+    end
     
-    Facade -->|9. Final Response| Controller
-    Controller -->|10. JSON| UI
+    UI -->|"9. Chat Interaction"| ChatClient
+    ChatClient <-->|"10. RAG Inference"| Ollama["🦙 Ollama (Phi-3)"]
 ````
 ## ⚡ Getting Started
 ### Prerequisites
 
 * Docker & Docker Compose
 
-* Java 21 SDK
-
-* Node.js 20+
+* 8GB+ RAM recommended
 
 ### 1. Clone the repository
 ```shell

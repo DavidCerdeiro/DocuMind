@@ -31,6 +31,7 @@ spring:
       chat:
         options:
           model: phi3
+          temperature: 0.1
       embedding:
         options:
           model: nomic-embed-text
@@ -44,8 +45,8 @@ spring:
 
 app:
     document:
-      chunk-size: 500
-      chunk-overlap: 40
+      chunk-size: 300
+      chunk-overlap: 50
       
 server:
   port: 8080

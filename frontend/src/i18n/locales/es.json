@@ -1,0 +1,45 @@
+{
+    "welcome":{
+        "title": "¡Bienvenido a DocuMind 🧠!",
+        "description": "Comienza cargando tu documento y me encargaré de responder todas tus preguntas sobre su contenido.",
+        "uploadLabel": "Subir Documento",
+        "confirmationButton": "¡Entendido, Comencemos!",
+        "file":{
+            "name": "Archivo: {{fileName}}",
+            "dropPrompt": "¡Suelta el PDF aquí!",
+            "clickPrompt": "Haz clic o arrastra tu PDF aquí",
+            "onlyPdfAlert": "Por favor, sube solo archivos PDF.",
+            "onlyPdfDescription": "Actualmente solo se permiten archivos en formato PDF para su procesamiento.",
+            "uploadError": "Error en la subida",
+            "uploadErrorDescription": "No se pudo conectar con el servidor. Por favor, revise su conexión e intente nuevamente.",
+            "success": "¡Archivo procesado con éxito!",
+            "initialStatus": "Procesando...",
+            "processing": "Tu documento se está procesando. Esto puede tardar unos minutos. Por favor, espera..."
+        },
+        "modal":{
+            "title": "¿Deseas cerrar la sesión?",
+            "description": "Al cerrar sesión, se eliminará el documento cargado y el historial de chat actual. ¿Quieres continuar?",
+            "confirmButton": "Sí, cerrar sesión",
+            "cancelButton": "No, mantener sesión actual"
+        } 
+    },
+    "chat":{
+            "title": "DocuMind 🧠",
+            "placeholder": "¿Qué quieres saber sobre el documento?",
+            "send": "Enviar",
+            "aiName": "DocuMind",
+            "userName": "Tú",
+            "closeSession": "Cerrar sesión",
+            "initialMessage": "¡Hola! He procesado tu documento PDF. Estoy listo para responder cualquier pregunta sobre su contenido. ¿Por dónde quieres empezar?",
+            "answerNotFound": "Lo siento, no pude encontrar información relacionada en el documento para responder a tu pregunta.",
+            "errorGeneric": "Lo siento, ocurrió un error al procesar tu solicitud. Por favor, intentelo de nuevo.",
+            "footerAdvice": "DocuMind puede cometer errores. Verifica la información importante.",
+            "thinking": "Estoy pensando...",
+            "closingSession": "Cerrando sesión...",
+            "sessionClosed": "Sesión cerrada correctamente.",
+            "error":{
+                "backendUnreachableTitle": "Error de comunicación",
+                "backendUnreachableDescription": "No puedo conectar con el cerebro de DocuMind (Backend apagado)."
+            }
+        }
+}

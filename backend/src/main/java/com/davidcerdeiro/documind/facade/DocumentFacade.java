@@ -2,6 +2,7 @@ package com.davidcerdeiro.documind.facade;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,33 +21,44 @@ public class DocumentFacade {
     }
 
 
-    public void processAndSaveDocument(MultipartFile file) {
-        // If the file is not a PDF, throw an exception
+    public String processAndSaveDocumentAsync(MultipartFile file) {
+        // 1. Validate file type
         if (!Objects.equals(file.getContentType(), "application/pdf")) {
             throw new InvalidFileTypeException("The file must be a PDF. Received: " + file.getContentType());
         }
 
-        // Process and save the document
+        // 2. Generate unique ID for this process
+        String jobId = UUID.randomUUID().toString();
+
+        // 3. Launch the process in the background
         try {
-            var resource = file.getResource();
-            var chunkedDocuments = documentService.chunkingDocument(resource);
-            documentService.saveDocument(chunkedDocuments);
-            
+            documentService.processFileAsync(jobId, file.getResource());
         } catch (Exception e) {
-            // Catch any exception and rethrow as a runtime exception
-            throw new RuntimeException("Error processing and saving the document", e);
+            throw new RuntimeException("Error initiating document processing", e);
         }
+
+        // 4. Return the ID immediately so the user doesn't have to wait
+        return jobId;
+    }
+    
+    // MMethod to check the status
+    public String getProcessingStatus(String jobId) {
+        return documentService.getStatus(jobId);
     }
 
-    public String promptModel(String question, String languageCode) {
+    public String promptModel(String question) {
         List<Document> similarDocuments = documentService.similaritySearch(question);
 
         if (similarDocuments.isEmpty()) {
             throw new NoDocumentsException("The question "+ question + " doesn't have related info in the document");
         }
 
-        String response = documentService.promptModel(similarDocuments, question, languageCode);
+        String response = documentService.promptModel(similarDocuments, question);
 
         return response;
+    }
+
+    public void clearVectorStore() {
+        documentService.clearVectorStore();
     }
 }

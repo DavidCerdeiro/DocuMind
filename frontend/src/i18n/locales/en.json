@@ -1,0 +1,45 @@
+{
+    "welcome":{
+        "title": "Welcome to DocuMind 🧠!",
+        "description": "Start by uploading your document and I'll take care of answering all your questions about its content.",
+        "uploadLabel": "Upload Document",
+        "confirmationButton": "Got it, Let's Start!",
+        "file":{
+            "name": "File: {{fileName}}",
+            "dropPrompt": "Drop the PDF here!",
+            "clickPrompt": "Click or drag your PDF here",
+            "onlyPdfAlert": "Please upload only PDF files.",
+            "onlyPdfDescription": "Currently, only files in PDF format are allowed for processing.",
+            "uploadError": "Upload Error",
+            "uploadErrorDescription": "Could not connect to the server. Please check your connection and try again.",
+            "success": "File processed successfully!",
+            "initialStatus": "Processing...",
+            "processing": "Your document is being processed. This may take a few minutes. Please wait..."
+        },
+        "modal":{
+            "title": "Do you want to log out?",
+            "description": "Logging out will delete the uploaded document and the current chat history. Do you want to continue?",
+            "confirmButton": "Yes, log out",
+            "cancelButton": "No, keep current session"
+        }
+    },
+    "chat":{
+        "title": "DocuMind 🧠",
+        "placeholder": "What do you want to know about the document?",
+        "send": "Send",
+        "aiName": "DocuMind",
+        "userName": "You",
+        "closeSession": "Close Session",
+        "answerNotFound": "Sorry, I couldn't find any related information in the document to answer your question.",
+        "initialMessage": "Hello! I've processed your PDF document. I'm ready to answer any questions about its content. Where would you like to start?",
+        "errorGeneric": "Sorry, an error occurred while processing your request. Please try again.",
+        "footerAdvice": "DocuMind may make mistakes. Verify important information.",
+        "thinking": "I'm thinking...",
+        "closingSession": "Closing session...",
+        "sessionClosed": "Session closed successfully.",
+        "error":{
+            "backendUnreachableTitle": "Communication Error",
+            "backendUnreachableDescription": "I can't connect to the DocuMind brain (Backend is down)."
+        }
+    }
+}

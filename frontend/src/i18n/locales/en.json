@@ -11,7 +11,21 @@
             "onlyPdfAlert": "Please upload only PDF files.",
             "onlyPdfDescription": "Currently, only files in PDF format are allowed for processing.",
             "uploadError": "Upload Error",
-            "uploadErrorDescription": "Could not connect to the server. Please check your connection and try again."
+            "uploadErrorDescription": "Could not connect to the server. Please check your connection and try again.",
+            "success": "File processed successfully!"
         }
+    },
+    "chat":{
+        "title": "DocuMind 🧠",
+        "placeholder": "What do you want to know about the document?",
+        "send": "Send",
+        "aiName": "DocuMind",
+        "userName": "You",
+        "closeSession": "Close Session",
+        "answerNotFound": "Sorry, I couldn't find any related information in the document to answer your question.",
+        "initialMessage": "Hello! I've processed your PDF document. I'm ready to answer any questions about its content. Where would you like to start?",
+        "errorGeneric": "Sorry, an error occurred while processing your request. Please try again.",
+        "footerAdvice": "DocuMind may make mistakes. Verify important information.",
+        "thinking": "I'm thinking..."
     }
 }

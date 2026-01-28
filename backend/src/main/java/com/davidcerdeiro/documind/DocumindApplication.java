@@ -2,8 +2,10 @@ package com.davidcerdeiro.documind;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
+@EnableAsync
 public class DocumindApplication {
 
 	public static void main(String[] args) {

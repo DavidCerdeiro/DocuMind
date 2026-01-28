@@ -1,33 +1,87 @@
-const API_URL = "/api/docs"; 
+const DOCS_API_URL = "/api/docs";
+const CHAT_API_URL = "/api/chat";
 
 export const DocuMindService = {
   /**
-   * Upload a PDF document to the backend server.
-   * @param file The PDF file to upload.
-   * @throws Error if the upload fails or the format is invalid.
+   * Inicia la subida asíncrona del documento.
+   * Retorna el ID del trabajo (Job ID) para hacer seguimiento.
    */
-  uploadDocument: async (file: File): Promise<void> => {
+  uploadDocument: async (file: File): Promise<{ jobId: string }> => {
     const formData = new FormData();
-    // "file" must match @RequestParam("file") in your DocumentController.java
     formData.append("file", file);
 
     try {
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${DOCS_API_URL}/upload`, {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        // Specific handling for the 415 error you defined in the Controller
-        if (response.status === 415) {
-          throw new Error("Unsupported format. The server only accepts PDFs.");
-        }
+        if (response.status === 504 || response.status === 502) throw new Error("Backend Unreachable");
+        if (response.status === 415) throw new Error("Formato no soportado. Solo PDFs.");
         throw new Error(`Upload error: ${response.status} ${response.statusText}`);
       }
-      
-      // If 200 OK, the function completes successfully (void)
+
+      // Ahora esperamos recibir: { "jobId": "...", "status": "PROCESSING" }
+      return await response.json();
     } catch (error) {
-      console.error("Error in DocuMindService:", error);
+      console.error("Error in uploadDocument:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Consulta el estado de un trabajo de procesamiento.
+   * Retorna el estado actual (PROCESSING, COMPLETED, ERROR...).
+   */
+  getJobStatus: async (jobId: string): Promise<string> => {
+    try {
+      const response = await fetch(`${DOCS_API_URL}/status/${jobId}`);
+      
+      if (!response.ok) {
+        throw new Error("Error checking status");
+      }
+
+      const data = await response.json();
+      return data.status; // "PROCESSING", "COMPLETED" o "ERROR..."
+    } catch (error) {
+      console.error("Error checking status:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Envía una pregunta al modelo de IA sobre el documento cargado.
+   * @param question El texto de la pregunta.
+   * @returns La respuesta de la IA como string.
+   * @throws Error "INFO_NOT_FOUND" si la IA no tiene la respuesta en el doc.
+   */
+  sendQuestion: async (question: string): Promise<string> => {
+    try {
+      const response = await fetch(CHAT_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question }),
+      });
+
+      if (response.status === 404) {
+        throw new Error("INFO_NOT_FOUND");
+      }
+
+      if (!response.ok) {
+         if (response.status === 504 || response.status === 502) {
+            throw new Error("Backend Unreachable");
+         }
+         throw new Error(`Chat error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.answer;
+
+    } catch (error) {
+      console.error("Error in sendQuestion:", error);
       throw error;
     }
   }

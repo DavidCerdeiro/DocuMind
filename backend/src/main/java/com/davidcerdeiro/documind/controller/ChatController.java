@@ -24,8 +24,8 @@ public class ChatController {
     // 200 OK: Question successfully answered
     // 404 Not Found: If the ask doesn't have info related in the document
     @PostMapping
-    public ResponseEntity<ChatResponse> getMethodName(@RequestBody ChatRequest request) {
-        String answer = documentFacade.promptModel(request.question(), request.language());
+    public ResponseEntity<ChatResponse> askModel(@RequestBody ChatRequest request) {
+        String answer = documentFacade.promptModel(request.question());
 
         return ResponseEntity.ok(new ChatResponse(answer));
     }

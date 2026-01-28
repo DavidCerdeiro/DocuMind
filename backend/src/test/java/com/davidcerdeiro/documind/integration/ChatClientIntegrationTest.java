@@ -88,7 +88,7 @@ public class ChatClientIntegrationTest extends BaseIntegrationTest {
         assertThat(similarDocs).isNotEmpty();
         
         // --- ACT ---
-        String response = documentService.promptModel(similarDocs, question, "en");
+        String response = documentService.promptModel(similarDocs, question);
         log.info("RAG answer: {}", response);
 
         // --- ASSERT ---
@@ -108,7 +108,7 @@ public class ChatClientIntegrationTest extends BaseIntegrationTest {
         List<Document> similarDocs = documentService.similaritySearch(question);
         
         // --- ACT ---
-        String response = documentService.promptModel(similarDocs, question, "en");
+        String response = documentService.promptModel(similarDocs, question);
         log.info("Anti-Hallucination Response: {}", response);
 
         // --- ASSERT ---

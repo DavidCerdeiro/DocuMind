@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template: 
+    metadata:
+      labels:
+        app: backend
+    spec:  
+      containers:
+        - name: backend-container
+          image: davidcer22/documind-backend:latest
+          ports:
+          - containerPort: 8080
+          env:
+          - name: SPRING_DATASOURCE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: documind-config
+                key: datasource-url
+          - name: SPRING_AI_OLLAMA_BASE_URL
+            valueFrom:
+              configMapKeyRef:
+                name: documind-config
+                key: ollama-base-url
+          - name: SPRING_DATASOURCE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: documind-secret
+                key: postgre-user
+          - name: SPRING_DATASOURCE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: documind-secret
+                key: postgre-password
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  labels:
+    app: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 8080 
+      targetPort: 8080

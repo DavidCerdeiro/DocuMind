@@ -47,6 +47,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     image: documind-frontend:latest
+    environment:
+      - BACKEND_URL=http://backend:8080
     container_name: documind_frontend
     ports:
       - "5173:80"

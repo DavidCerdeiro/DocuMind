@@ -1,5 +1,6 @@
 package com.davidcerdeiro.documind.service;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -7,11 +8,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
+import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -45,16 +47,17 @@ public class DocumentService {
     public List<Document> chunkingDocument(Resource document) {
         // 1. Initial logging
         System.out.println("Starting PDF reading...");
-        PagePdfDocumentReader pdfDocumentReader = new PagePdfDocumentReader(document);
-        List<Document> documents = pdfDocumentReader.read();
+        TikaDocumentReader reader = new TikaDocumentReader(document);
+        List<Document> documents = reader.read();
         System.out.println("PDF read. Pages found: " + documents.size());
 
         // 2. Cleaning (Corrected for Spanish and Chunking)
         List<Document> cleanDocuments = documents.stream().map(doc -> {
-            String cleanText = doc.getText()
-                .replaceAll("[\\p{Cntrl}&&[^\\r\\n\\t]]", "") 
-                .replaceAll("[ \\t]+", " ")
-                .trim();
+        String cleanText = doc.getText()
+                    // Normalizamos saltos de línea extraños pero mantenemos separación de párrafos
+                    .replaceAll("\\r\\n", "\n") 
+                    .replaceAll("[ \\t]+", " ") // Espacios múltiples a uno solo
+                    .trim();
             return new Document(cleanText, doc.getMetadata());
         }).toList();
 
@@ -83,6 +86,18 @@ public class DocumentService {
         } catch (Exception e) {
             processStatus.put(fileId, "ERROR: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            if (file instanceof FileSystemResource) {
+                File diskFile = ((FileSystemResource) file).getFile();
+                if (diskFile.exists()) {
+                    boolean deleted = diskFile.delete();
+                    if (!deleted) {
+                        System.err.println("WARN: Could not delete temp file " + diskFile.getAbsolutePath());
+                    } else {
+                        System.out.println("Temp file cleaned up for job " + fileId);
+                    }
+                }
+            }
         }
     }
 
@@ -92,7 +107,7 @@ public class DocumentService {
 
     // Method to save documents to vector store
     public void saveDocument(List<Document> documents) {
-        int batchSize = 50; 
+        int batchSize = 1; 
         int total = documents.size();
 
         System.out.println("Starting embedding generation for " + total + " chunks...");
@@ -103,6 +118,8 @@ public class DocumentService {
             
             System.out.println("Processing batch " + ((i / batchSize) + 1) + " (" + (i + 1) + " to " + end + " of " + total + ")...");
             
+            int totalChars = batch.stream().mapToInt(d -> d.getText().length()).sum();
+System.out.println("Enviando batch " + i + " con aprox " + (totalChars / 4) + " tokens.");
             vectorStore.add(batch);
         }
         
@@ -114,17 +131,15 @@ public class DocumentService {
         
         SearchRequest searchRequest = SearchRequest.builder()
             .query(question)
-            .topK(6) 
-            .similarityThreshold(0.4)
+            .topK(8) 
+            .similarityThreshold(0.45)
             .build();
 
         List<Document> docs = vectorStore.similaritySearch(searchRequest);
         
-        // DEBUG: Ver qué demonios está encontrando
         System.out.println("--- CHUNKS ENCONTRADOS (" + docs.size() + ") ---");
         docs.forEach(d -> {
             System.out.println("Score: " + d.getMetadata().get("distance")); // O score según impl
-            // Imprimimos solo los primeros 100 caracteres para no ensuciar
             String preview = d.getText().length() > 100 ? d.getText().substring(0, 100) : d.getText();
             System.out.println("Contenido: " + preview.replace("\n", " ") + "...");
         });
@@ -134,29 +149,30 @@ public class DocumentService {
     }
 
     public String promptModel(List<Document> similarDocuments, String question) {
+        // Building context from similar documents, separated by tags
         String context = similarDocuments.stream()
-                .map(Document::getText)
+                .map(doc -> "<fragment>" + System.lineSeparator() + doc.getText() + System.lineSeparator() + "</fragment>")
                 .collect(Collectors.joining(System.lineSeparator()));
 
-        // OPTIMIZACIÓN DEL PROMPT:
-        // 1. Reglas PRIMERO (evita fuga al final).
-        // 2. Inglés técnico para mejor obediencia del modelo (Phi-3).
-        // 3. Instrucción explícita de idioma de salida dinámico.
+        // System prompt with rules for the AI model
         String systemText = """
-            You are a precise and helpful assistant.
+            You are a backend data extraction engine. You are NOT a chat assistant.
+            You have no internal knowledge. You can ONLY read the provided XML context.
             
-            RULES:
-            1. LANGUAGE: Detect the language of the user's question and answer EXCLUSIVELY in that language.
-            2. CONCISENESS: Limit your answer to maximum 80 words (approx. 3 sentences). Be direct.
-            3. SOURCE: Use ONLY the provided context below. Do not use outside knowledge.
-            4. MISSING INFO: If the answer is not in the context, return exactly: [[NO_INFO_FOUND]]
-            
-            CONTEXT:
-            ---------------------
+            CONTEXT START:
+            <context>
             {context_str}
-            ---------------------
+            </context>
+            CONTEXT END.
+                        
+            INSTRUCTIONS (MUST FOLLOW STRICTLY):
+            1.  SEARCH the context for the answer to the user question.
+            2.  IF the answer is found: Output ONLY the answer. Max 50 words. No intro. No "Here is the answer".
+            3.  IF the answer is NOT strictly in the context: Output EXACTLY: [[NO_INFO_FOUND]]
+            4.  NEVER invent data. NEVER give hypothetical examples. NEVER ask follow-up questions.
+            5.  LANGUAGE: Answer in the same language as the USER QUESTION.
             """;
-
+        // Prompting the chat model
         String response = chatClient.prompt()
                 .system(s -> s.text(systemText).param("context_str", context))
                 .user(question)
@@ -167,18 +183,14 @@ public class DocumentService {
             return null;
         }
 
-        String normalizedResponse = response.toLowerCase();
-
-        boolean isRefusal = response.contains("[[NO_INFO_FOUND]]") || 
-                            normalizedResponse.contains("sorry, i couldn't") ||
-                            normalizedResponse.contains("i cannot answer") ||
-                            normalizedResponse.contains("does not contain information");
-
-        if (isRefusal) {
+        
+        String cleanResponse = response.trim();
+        
+        if (cleanResponse.contains("[[NO_INFO_FOUND]]")) {
             return null;
         }
 
-        return response;
+        return cleanResponse;
     }
 
     @Transactional 

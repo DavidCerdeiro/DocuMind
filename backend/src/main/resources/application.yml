@@ -31,7 +31,7 @@ spring:
       chat:
         options:
           model: phi3
-          temperature: 0.1
+          temperature: 0.0
       embedding:
         options:
           model: nomic-embed-text

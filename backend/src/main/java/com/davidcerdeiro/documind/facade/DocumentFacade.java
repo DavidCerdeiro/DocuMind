@@ -3,10 +3,13 @@ package com.davidcerdeiro.documind.facade;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.ai.document.Document;
+import org.springframework.core.io.FileSystemResource;
+
 import com.davidcerdeiro.documind.exception.InvalidFileTypeException;
 import com.davidcerdeiro.documind.exception.NoDocumentsException;
 import com.davidcerdeiro.documind.service.DocumentService;
@@ -32,7 +35,11 @@ public class DocumentFacade {
 
         // 3. Launch the process in the background
         try {
-            documentService.processFileAsync(jobId, file.getResource());
+            Path tempFile = Files.createTempFile("documind_" + jobId, ".pdf");
+            file.transferTo(tempFile.toFile());
+
+            // 4. Launch async process with the FileSystemResource (Persistent)
+            documentService.processFileAsync(jobId, new FileSystemResource(tempFile.toFile()));
         } catch (Exception e) {
             throw new RuntimeException("Error initiating document processing", e);
         }

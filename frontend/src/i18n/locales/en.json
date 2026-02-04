@@ -14,7 +14,8 @@
             "uploadErrorDescription": "Could not connect to the server. Please check your connection and try again.",
             "success": "File processed successfully!",
             "initialStatus": "Processing...",
-            "processing": "Your document is being processed. This may take a few minutes. Please wait..."
+            "processing": "Your document is being processed. This may take a few minutes. Please wait...",
+            "loading": "Loading document..."
         },
         "modal":{
             "title": "Do you want to log out?",

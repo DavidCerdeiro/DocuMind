@@ -1,3 +1,5 @@
+import type { JobStatusResponse } from "../types/JobStatusResponse";
+
 const DOCS_API_URL = "/api/docs";
 const CHAT_API_URL = "/api/chat";
 
@@ -36,16 +38,20 @@ export const DocuMindService = {
    * @param jobId The job ID returned from uploadDocument.
    * @returns A promise that resolves to the job status string.
    */
-  getJobStatus: async (jobId: string): Promise<string> => {
+  getJobStatus: async (jobId: string): Promise<JobStatusResponse> => {
     try {
       const response = await fetch(`${DOCS_API_URL}/status/${jobId}`);
       
+      // Si es 404, devolvemos un estado controlado para que el frontend no rompa
+      if (response.status === 404) {
+         return { status: "NOT_FOUND", progress: 0 };
+      }
+
       if (!response.ok) {
         throw new Error("Error checking status");
       }
 
-      const data = await response.json();
-      return data.status; // "PROCESSING", "COMPLETED" or "ERROR..."
+      return await response.json();
     } catch (error) {
       console.error("Error checking status:", error);
       throw error;

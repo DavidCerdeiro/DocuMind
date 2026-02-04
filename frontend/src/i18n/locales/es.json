@@ -14,7 +14,8 @@
             "uploadErrorDescription": "No se pudo conectar con el servidor. Por favor, revise su conexión e intente nuevamente.",
             "success": "¡Archivo procesado con éxito!",
             "initialStatus": "Procesando...",
-            "processing": "Tu documento se está procesando. Esto puede tardar unos minutos. Por favor, espera..."
+            "processing": "Tu documento se está procesando. Esto puede tardar unos minutos. Por favor, espera...",
+            "loading": "Cargando documento..."
         },
         "modal":{
             "title": "¿Deseas cerrar la sesión?",

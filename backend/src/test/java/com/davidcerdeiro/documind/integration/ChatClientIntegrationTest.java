@@ -80,7 +80,7 @@ public class ChatClientIntegrationTest extends BaseIntegrationTest {
         Document doc = new Document(uniqueContent, Map.of("source", "favourite_player.pdf"));
         
         // Store in pgvector
-        documentService.saveDocument(List.of(doc));
+       documentService.saveDocument("test-job-1", List.of(doc));
 
         String question = "¿Who is my favourite player?";
         
@@ -101,7 +101,7 @@ public class ChatClientIntegrationTest extends BaseIntegrationTest {
         // --- ARRANGE ---
         String content = "Java 21 was released in September 2023 and includes new features such as Record Patterns and Pattern Matching for switch.";
         Document doc = new Document(content);
-        documentService.saveDocument(List.of(doc));
+        documentService.saveDocument("test-job-1", List.of(doc));
 
         String question = "Which is the recipe of paella?";
         

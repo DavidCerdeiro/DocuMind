@@ -1,6 +1,5 @@
 package com.davidcerdeiro.documind.service;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,12 +12,13 @@ import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.davidcerdeiro.documind.dto.JobStatus;
 
 @Service
 public class DocumentService {
@@ -33,7 +33,7 @@ public class DocumentService {
 
     private final ChatClient chatClient;
 
-    private final Map<String, String> processStatus = new ConcurrentHashMap<>();
+    private final Map<String, JobStatus> processStatus = new ConcurrentHashMap<>();
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -75,39 +75,34 @@ public class DocumentService {
     @Async 
     public void processFileAsync(String fileId, Resource file) {
         try {
-            processStatus.put(fileId, "PROCESSING");
+            // Initial status
+            processStatus.put(fileId, new JobStatus("PROCESSING", 0));
             
             List<Document> chunks = this.chunkingDocument(file);
-            this.saveDocument(chunks);
             
-            processStatus.put(fileId, "COMPLETED");
+            // This will be updating the status internally
+            this.saveDocument(fileId, chunks);
+            
+            // Final status
+            processStatus.put(fileId, new JobStatus("COMPLETED", 100));
             System.out.println("Process " + fileId + " completed.");
             
         } catch (Exception e) {
-            processStatus.put(fileId, "ERROR: " + e.getMessage());
+           
+            processStatus.put(fileId, new JobStatus("ERROR", 0, e.getMessage()));
             e.printStackTrace();
         } finally {
-            if (file instanceof FileSystemResource) {
-                File diskFile = ((FileSystemResource) file).getFile();
-                if (diskFile.exists()) {
-                    boolean deleted = diskFile.delete();
-                    if (!deleted) {
-                        System.err.println("WARN: Could not delete temp file " + diskFile.getAbsolutePath());
-                    } else {
-                        System.out.println("Temp file cleaned up for job " + fileId);
-                    }
-                }
-            }
+            
         }
     }
 
-    public String getStatus(String fileId) {
-        return processStatus.getOrDefault(fileId, "NOT_FOUND");
+    public JobStatus getStatus(String fileId) {
+        return processStatus.getOrDefault(fileId, new JobStatus("NOT_FOUND", 0));
     }
 
     // Method to save documents to vector store
-    public void saveDocument(List<Document> documents) {
-        int batchSize = 1; 
+    public void saveDocument(String fileId, List<Document> documents) {
+        int batchSize = 1;
         int total = documents.size();
 
         System.out.println("Starting embedding generation for " + total + " chunks...");
@@ -116,18 +111,21 @@ public class DocumentService {
             int end = Math.min(i + batchSize, total);
             List<Document> batch = documents.subList(i, end);
             
-            System.out.println("Processing batch " + ((i / batchSize) + 1) + " (" + (i + 1) + " to " + end + " of " + total + ")...");
-            
-            int totalChars = batch.stream().mapToInt(d -> d.getText().length()).sum();
-System.out.println("Enviando batch " + i + " con aprox " + (totalChars / 4) + " tokens.");
             vectorStore.add(batch);
+
+            // Progress calculation
+            // (Chunks processed / Total) * 100
+            int progress = (int) ((double) end / total * 100);
+            
+            // Update status
+            processStatus.put(fileId, new JobStatus("PROCESSING", progress));
+            
+            System.out.println("Job " + fileId + ": " + progress + "% completed.");
         }
-        
-        System.out.println("All embeddings saved successfully!");
     }
 
     public List<Document> similaritySearch(String question) {
-        System.out.println("Buscando similitudes para: " + question);
+        System.out.println("Searching similarities for: " + question);
         
         SearchRequest searchRequest = SearchRequest.builder()
             .query(question)
@@ -137,11 +135,11 @@ System.out.println("Enviando batch " + i + " con aprox " + (totalChars / 4) + " 
 
         List<Document> docs = vectorStore.similaritySearch(searchRequest);
         
-        System.out.println("--- CHUNKS ENCONTRADOS (" + docs.size() + ") ---");
+        System.out.println("--- CHUNKS FOUND (" + docs.size() + ") ---");
         docs.forEach(d -> {
-            System.out.println("Score: " + d.getMetadata().get("distance")); // O score según impl
+            System.out.println("Score: " + d.getMetadata().get("distance")); 
             String preview = d.getText().length() > 100 ? d.getText().substring(0, 100) : d.getText();
-            System.out.println("Contenido: " + preview.replace("\n", " ") + "...");
+            System.out.println("Content: " + preview.replace("\n", " ") + "...");
         });
         System.out.println("----------------------------------------------");
 

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.davidcerdeiro.documind.dto.JobStatus;
 import com.davidcerdeiro.documind.facade.DocumentFacade;
 
 @RestController
@@ -43,17 +44,14 @@ public class DocumentController {
     // 200 OK: Returns the current status of the document processing
     // 404 Not Found: If the provided jobId does not exist
     @GetMapping("/status/{jobId}")
-    public ResponseEntity<Map<String, String>> getStatus(@PathVariable String jobId) {
-        String status = documentFacade.getProcessingStatus(jobId);
+    public ResponseEntity<JobStatus> getStatus(@PathVariable String jobId) {
+        JobStatus currentStatus = documentFacade.getProcessingStatus(jobId);
         
-        if ("NOT_FOUND".equals(status)) {
+        if ("NOT_FOUND".equals(currentStatus.status())) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(Map.of(
-            "jobId", jobId,
-            "status", status
-        ));
+        return ResponseEntity.ok(currentStatus);
     }
 
     @DeleteMapping

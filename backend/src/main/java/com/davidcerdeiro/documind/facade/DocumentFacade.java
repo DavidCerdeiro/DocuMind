@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.ai.document.Document;
 import org.springframework.core.io.FileSystemResource;
-
+import com.davidcerdeiro.documind.dto.JobStatus;
 import com.davidcerdeiro.documind.exception.InvalidFileTypeException;
 import com.davidcerdeiro.documind.exception.NoDocumentsException;
 import com.davidcerdeiro.documind.service.DocumentService;
@@ -49,8 +49,9 @@ public class DocumentFacade {
     }
     
     // MMethod to check the status
-    public String getProcessingStatus(String jobId) {
-        return documentService.getStatus(jobId);
+    public JobStatus getProcessingStatus(String jobId) {
+        JobStatus status = documentService.getStatus(jobId);
+        return status;
     }
 
     public String promptModel(String question) {
@@ -68,4 +69,5 @@ public class DocumentFacade {
     public void clearVectorStore() {
         documentService.clearVectorStore();
     }
+
 }

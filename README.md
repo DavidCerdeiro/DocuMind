@@ -10,6 +10,10 @@
 > **"Chat with your documents"**. DocuMind is a robust REST API and Interface that leverages **Generative AI** to analyze PDF documents and answer questions based on their content, ensuring zero hallucinations by strictly adhering to the provided context. Unlike basic RAG demos, DocuMind implements an **Asynchronous Architecture** to handle large files (e.g., +200-page manuals) without blocking the user interface, ensuring a robust backend performance.
 
 ---
+## 🎥 Live Demo
+https://github.com/user-attachments/assets/12b24941-81a3-459c-b040-5bc3e8795f2b
+> **Note regarding performance:** This demo has been edited for brevity. The document ingestion and AI inference phases have been accelerated to demonstrate the UI flow. 
+> Actual processing times will vary depending on your local hardware resources (CPU/GPU) allocated to the Ollama instance.
 
 ## 🚀 About The Project
 

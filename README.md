@@ -12,6 +12,16 @@
 ---
 ## 🎥 Live Demo
 https://github.com/user-attachments/assets/12b24941-81a3-459c-b040-5bc3e8795f2b
+
+**🔍 What's happening in this demo?**
+In this example, DocuMind is analyzing the **Tesla Model 3 Owner's Manual** (a complex, +200-page PDF). 
+* **The Query:** We ask the system in Spanish: *"¿Qué tiene prioridad, el manual de usuario o las notas de versión?"* (Which takes precedence, the owner's manual or the release notes?).
+* **The Result:** The system quickly searches through the vector database and accurately extracts the exact clause, demonstrating its high precision, zero-hallucination policy, and out-of-the-box **multi-language support**.
+
+**📄 Source Context (Ground Truth):**
+Here is the exact excerpt from the original PDF that the AI successfully retrieved and understood to formulate its answer:
+<img width="927" height="122" alt="image" src="https://github.com/user-attachments/assets/e37531d1-8613-49a3-a178-07827e138782" />
+
 > **Note regarding performance:** This demo has been edited for brevity. The document ingestion and AI inference phases have been accelerated to demonstrate the UI flow. 
 > Actual processing times will vary depending on your local hardware resources (CPU/GPU) allocated to the Ollama instance.
 
